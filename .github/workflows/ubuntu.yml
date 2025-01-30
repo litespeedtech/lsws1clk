@@ -4,11 +4,11 @@ name: lsws1clk
 on:
   push:
     branches:
-      - master
+      - main
 
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   lsws1clk:
@@ -33,10 +33,10 @@ jobs:
         run: sudo bash lsws1clk.sh -U --quiet 
       - name: Verify 
         run: |
-          if [ -e $SERVER_ROOT/bin/openlitespeed ]; then 
+          if [ -e $SERVER_ROOT/bin/litespeed ]; then 
               echo 'Uninstallation failed'; exit 1
           fi
       - name: lsws1clk pluss installation    
-        run: sudo bash lsws1clk.sh --lsphp 80 --wordpressplus ${{ env.WP_DOMAIN }} --wordpresspath /var/www/html --quiet 
+        run: sudo bash lsws1clk.sh --lsphp 83 --wordpressplus ${{ env.WP_DOMAIN }} --wordpresspath /var/www/html --quiet 
       - name: Verify    
         run: curl -skL http://${{ env.WP_DOMAIN }}/ | grep -i "WordPress" >/dev/null 2>&1 
