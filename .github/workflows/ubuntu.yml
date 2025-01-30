@@ -1,0 +1,42 @@
+  
+name: lsws1clk
+
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  lsws1clk:
+    runs-on: ubuntu-latest
+    env: 
+      WP_DOMAIN: 'action.example.com'
+    steps:
+      - uses: actions/checkout@v2
+      - name: env setup
+        run: | 
+          sudo apt-get remove --purge mysql* -y
+          sudo apt-get autoremove -y
+          sudo apt-get autoclean -y
+          sudo rm -rf /etc/mysql /var/lib/mysql /var/log/mysql
+          sudo chmod 666 /etc/hosts
+          sudo echo "127.0.0.1 ${{ env.WP_DOMAIN }}" >> /etc/hosts
+      - name: lsws1clk installation 
+        run: sudo bash -x lsws1clk.sh -W --quiet
+      - name: Verify    
+        run: curl -skL http://localhost/ | grep -i "WordPress" >/dev/null 2>&1
+      - name: lsws1clk uninstallation    
+        run: sudo bash lsws1clk.sh -U --quiet 
+      - name: Verify 
+        run: |
+          if [ -e $SERVER_ROOT/bin/openlitespeed ]; then 
+              echo 'Uninstallation failed'; exit 1
+          fi
+      - name: lsws1clk pluss installation    
+        run: sudo bash lsws1clk.sh --lsphp 80 --wordpressplus ${{ env.WP_DOMAIN }} --wordpresspath /var/www/html --quiet 
+      - name: Verify    
+        run: curl -skL http://${{ env.WP_DOMAIN }}/ | grep -i "WordPress" >/dev/null 2>&1 
