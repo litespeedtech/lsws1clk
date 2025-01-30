@@ -10,7 +10,7 @@ MARIADBCPUARCH=
 SERVER_ROOT=/usr/local/lsws
 WEBCF="$SERVER_ROOT/conf/httpd_config.xml"
 EXAMPLE_VHOSTCONF="$SERVER_ROOT/DEFAULT/conf/vhconf.xml"
-RULE_FILE='modsec_includes.xml'
+RULE_FILE='modsec_includes.conf'
 OWASP_DIR="${SERVER_ROOT}/conf/owasp"
 CRS_DIR='owasp-modsecurity-crs'
 LSWSINSTALLED=
@@ -47,11 +47,11 @@ ADMINPASSWORD=
 ROOTPASSWORD=
 USERPASSWORD=
 WPPASSWORD=
-LSPHPVERLIST=(71 72 73 74 80 81 82 83)
-MARIADBVERLIST=(10.2 10.3 10.4 10.5 10.6 10.7 10.8 10.9 10.10 10.11 11.0 11.1 11.2 11.3)
+LSPHPVERLIST=(74 80 81 82 83 84)
+MARIADBVERLIST=(10.11 11.4 11.6)
 OLD_SYS_MARIADBVERLIST=(10.2 10.3 10.4 10.5)
 LSPHPVER=83
-MARIADBVER=10.11
+MARIADBVER=11.4
 #MYSQLVER=8.0
 LICENSE='TRIAL'
 PERCONAVER=80
@@ -851,36 +851,6 @@ function centos_install_mariadb
 {
     echoB "${FPACE} - Add MariaDB repo"
     curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-$MARIADBVER" >/dev/null 2>&1
-#    local REPOFILE=/etc/yum.repos.d/MariaDB.repo
-#    if [ ! -f $REPOFILE ] ; then
-#        local CENTOSVER=
-#        if [ "$OSTYPE" != "x86_64" ] ; then
-#            CENTOSVER=centos$OSVER-x86
-#        else
-#            CENTOSVER=centos$OSVER-amd64
-#        fi
-#        if [ "$OSNAMEVER" = "CENTOS8" ] || [ "$OSNAMEVER" = "CENTOS9" ]; then
-#            rpm --quiet --import https://downloads.mariadb.com/MariaDB/MariaDB-Server-GPG-KEY
-#            cat >> $REPOFILE <<END
-#[mariadb]
-#name = MariaDB
-#baseurl = https://downloads.mariadb.com/MariaDB/mariadb-$MARIADBVER/yum/rhel/\$releasever/\$basearch
-#gpgkey = file:///etc/pki/rpm-gpg/MariaDB-Server-GPG-KEY
-#gpgcheck=1
-#enabled = 1
-#module_hotfixes = 1
-#END
-#        else
-#            cat >> $REPOFILE <<END
-#[mariadb]
-#name = MariaDB
-#baseurl = http://yum.mariadb.org/$MARIADBVER/$CENTOSVER
-#gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
-#gpgcheck=1
-
-#END
-#        fi 
-#    fi
     echoB "${FPACE} - Install MariaDB"
     if [ "$OSNAMEVER" = "CENTOS8" ] || [ "$OSNAMEVER" = "CENTOS9" ]; then
         silent ${YUM} install -y boost-program-options
@@ -955,12 +925,6 @@ function debian_install_mariadb
     elif [ "$OSNAME" = "ubuntu" ]; then
         silent ${APT} -y -f install software-properties-common
     fi
-    #MARIADB_KEY='/usr/share/keyrings/mariadb.gpg'
-    #wget -q -O- https://mariadb.org/mariadb_release_signing_key.asc | gpg --dearmor > "${MARIADB_KEY}"
-    #if [ ! -e "${MARIADB_KEY}" ]; then 
-    #    echoR "${MARIADB_KEY} does not exist, please check the key, exit!"
-    #    exit 1
-    #fi
     echoB "${FPACE} - Add MariaDB repo"
 	if [ "${OSNAMEVER}" = 'UBUNTU24' ]; then
         #https://forum.hestiacp.com/t/mariadb-repos-failing/13097
@@ -969,14 +933,6 @@ function debian_install_mariadb
         echoB "${FPACE} - Add MariaDB repo"   
         curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-$MARIADBVER" >/dev/null 2>&1
     fi
-    #if [ -e /etc/apt/sources.list.d/mariadb.list ]; then  
-    #    grep -Fq  "mirror.mariadb.org" /etc/apt/sources.list.d/mariadb.list >/dev/null 2>&1
-    #    if [ $? != 0 ] ; then
-    #        echo "deb [$MARIADBCPUARCH signed-by=${MARIADB_KEY}] http://mirror.mariadb.org/repo/$MARIADBVER/$OSNAME $OSVER main"  > /etc/apt/sources.list.d/mariadb.list
-    #    fi
-    #else 
-    #    echo "deb [$MARIADBCPUARCH signed-by=${MARIADB_KEY}] http://mirror.mariadb.org/repo/$MARIADBVER/$OSNAME $OSVER main"  > /etc/apt/sources.list.d/mariadb.list
-    #fi
     echoB "${FPACE} - Update packages"
     ${APT} update
     echoB "${FPACE} - Install MariaDB"
@@ -996,33 +952,8 @@ function debian_install_mariadb
 function debian_install_mysql
 {
     echoB "${FPACE} - Install software properties"
-    #local MYSQL_REPO='/etc/apt/sources.list.d/mysql.list'
     silent ${APT} -y -f install software-properties-common
-    #apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3A79BD29 >/dev/null 2>&1
-    #apt-key list 2>&1 | grep MySQL >/dev/null 
-    #if [ ${?} != 0 ]; then 
-    #    echoY 'Key add failed from keyserver.ubuntu.com, try pgp.mit.edu!'
-    #    apt-key adv --keyserver pgp.mit.edu --recv-keys 3A79BD29
-    #    apt-key list 2>&1 | grep MySQL >/dev/null 
-    #    if [ ${?} != 0 ]; then 
-    #        echoR 'Key add failed from pgp.mit.edu, please check the key issue, exit!'
-    #        exit 1
-    #    fi
-    #fi
-    #echoB "${FPACE} - Add mysql ${MYSQLVER} repo"
-    #if [ -e "${MYSQL_REPO}" ]; then
-    #    grep -Fq  "repo.mysql.com" "${MYSQL_REPO}" >/dev/null 2>&1
-    #    if [ $? != 0 ] ; then
-    #        echo "deb http://repo.mysql.com/apt/$OSNAME $OSVER mysql-${MYSQLVER}"  > "${MYSQL_REPO}"
-    #    fi
-    #else 
-    #    echo "deb http://repo.mysql.com/apt/$OSNAME $OSVER mysql-${MYSQLVER}"  > "${MYSQL_REPO}"  
-    #fi
-    #echoB "${FPACE} - Update packages"
-    #${APT} update
     echoB "${FPACE} - Install Mysql"
-    #debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password ${ROOTPASSWORD}"
-    #debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password ${ROOTPASSWORD}"
     DEBIAN_FRONTEND=noninteractive apt-get -y install mysql-server > /dev/null 2>&1
     if [ $? != 0 ] ; then
         echoR "An error occured during installation of MYSQL. Please fix this error and try again."
@@ -1077,25 +1008,27 @@ function mk_owasp_dir
 
 function enable_lsws_modsec
 {
-    grep 'module mod_security {' ${WEBCF} >/dev/null 2>&1
+    grep 'mod_security' ${WEBCF} >/dev/null 2>&1
     if [ ${?} -eq 0 ] ; then
         echoB "${FPACE} - Already configured for modsecurity."
     else
         echoB "${FPACE} - Enable modsecurity"
-        sed -i "s=module cache=module mod_security {\nmodsecurity  on\
-        \nmodsecurity_rules \`\nSecRuleEngine On\n\`\nmodsecurity_rules_file \
-        ${OWASP_DIR}/${RULE_FILE}\n  ls_enabled              1\n}\
-        \n\nmodule cache=" ${WEBCF}
+        sed -i 's/<enableCensorship>0</<enableCensorship>1</g' ${WEBCF}
+        sed -i "/<censorshipRuleSet>/a \\
+      <name>mod_security</name> \\
+      <enabled>1</enabled> \\
+<ruleSet>Include ${OWASP_DIR}/modsec_includes.conf</ruleSet>" ${WEBCF}
     fi    
 }
 
 function disable_lsws_modesec
 {
-    grep 'module mod_security {' ${WEBCF} >/dev/null 2>&1
+    grep '>mod_security<' ${WEBCF} >/dev/null 2>&1
     if [ ${?} -eq 0 ] ; then
         echo 'Disable modsecurity'
-        fst_match_line 'module mod_security' ${WEBCF}
-        lst_match_line ${FIRST_LINE_NUM} ${WEBCF} '}'
+        sed -i 's/<enableCensorship>1</<enableCensorship>0</g' ${WEBCF}
+        fst_match_line '>mod_security<' ${WEBCF}
+        lst_match_line ${FIRST_LINE_NUM} ${WEBCF} '</ruleSet>'
         sed -i "${FIRST_LINE_NUM},${LAST_LINE_NUM}d" ${WEBCF}
     else
         echo 'Already disabled for modsecurity'
@@ -2379,8 +2312,6 @@ function main_lsws_test
         else
             test_wordpress
         fi
-#    else
-#        test_lsws
     fi
 
     if [ "${TESTGETERROR}" = "yes" ] ; then
