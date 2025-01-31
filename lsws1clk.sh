@@ -48,8 +48,7 @@ ROOTPASSWORD=
 USERPASSWORD=
 WPPASSWORD=
 LSPHPVERLIST=(74 80 81 82 83 84)
-MARIADBVERLIST=(10.11 11.4 11.6)
-OLD_SYS_MARIADBVERLIST=(10.2 10.3 10.4 10.5)
+MARIADBVERLIST=(10.5 10.6 10.11 11.4 11.6)
 LSPHPVER=83
 MARIADBVER=11.4
 #MYSQLVER=8.0
@@ -70,6 +69,8 @@ EPACE='        '
 FPACE='    '
 APT='apt-get -qq'
 YUM='yum -q'
+mysqladmin='mysqladmin'
+mysql='mysql'
 MYGITHUBURL=https://raw.githubusercontent.com/litespeedtech/lsws1clk/master/lsws1clk.sh
 
 function echoY
@@ -211,13 +212,13 @@ function restart_lsws
 function usage
 {
     echo -e "\033[1mOPTIONS\033[0m"
-    echoNW "  -L,    license"                 "${EPACE}To use specified LSWS serial number."    
+    echoNW "  -L,    license"                 "${EPACE} To use specified LSWS serial number."    
     echoW " --adminuser [USERNAME]"           "${EPACE}    To set the WebAdmin username for LiteSpeed instead of admin."
     echoNW "  -A,    --adminpassword [PASSWORD]" "${EPACE}To set the WebAdmin password for LiteSpeed instead of using a random one."
     echoW " --adminport [PORTNUMBER]"           "${EPACE}    To set the WebAdmin console port number instead of 7080."
     echoNW "  -E,    --email [EMAIL]          " "${EPACE} To set the administrator email."
-    echoW " --lsphp [VERSION]                 " "To set the LSPHP version, such as 82. We currently support versions '${LSPHPVERLIST[@]}'."
-    echoW " --mariadbver [VERSION]            " "To set MariaDB version, such as 10.6. We currently support versions '${MARIADBVERLIST[@]}'."
+    echoW " --lsphp [VERSION]                 " "To set the LSPHP version, such as 83. We currently support versions '${LSPHPVERLIST[@]}'."
+    echoW " --mariadbver [VERSION]            " "To set MariaDB version, such as 11.4. We currently support versions '${MARIADBVERLIST[@]}'."
     echoNW "  -W,    --wordpress              " "${EPACE} To install WordPress. You will still need to complete the WordPress setup by browser"
     echoW " --wordpressplus [SITEDOMAIN]      " "To install, setup, and configure WordPress, also LSCache will be enabled"
     echoW " --wordpresspath [WP_PATH]         " "To specify a location for the new WordPress installation or an existing WordPress."
@@ -253,7 +254,7 @@ function usage
     echoW "./lsws1clk.sh                       " "To install LiteSpeed with a random WebAdmin password."
     echoW "./lsws1clk.sh --lsphp 83            " "To install LiteSpeed with lsphp83."
     echoW "./lsws1clk.sh -A 123456 -e a@cc.com " "To install LiteSpeed with WebAdmin password  \"123456\" and email a@cc.com."
-    echoW "./lsws1clk.sh -R 123456 -W          " "To install LiteSpeed with WordPress and MySQL root password \"123456\"."
+    echoW "./lsws1clk.sh -R 123456 -W          " "To install LiteSpeed with WordPress and MariaDB root password \"123456\"."
     echoW "./lsws1clk.sh --wordpressplus a.com " "To install LiteSpeed with a fully configured WordPress installation at \"a.com\"."
     echo
     exit 0
@@ -786,7 +787,7 @@ function main_gen_password
     if [ "$INSTALLWORDPRESSPLUS" = "1" ] ; then
         read_password "$WPPASSWORD" "WordPress admin password"
         WPPASSWORD=$TEMPPASSWORD
-    fi    
+    fi
 }
 
 function main_lsws_password
@@ -800,7 +801,7 @@ function test_mysql_password
     CURROOTPASSWORD=$ROOTPASSWORD
     TESTPASSWORDERROR=0
 
-    mysqladmin -uroot -p$CURROOTPASSWORD password $CURROOTPASSWORD
+    "${mysqladmin}" -uroot -p$CURROOTPASSWORD password $CURROOTPASSWORD
     if [ $? != 0 ] ; then
         #Sometimes, mysql will treat the password error and restart will fix it.
         service mysql restart
@@ -808,25 +809,25 @@ function test_mysql_password
             service mysqld restart
         fi
 
-        mysqladmin -uroot -p$CURROOTPASSWORD password $CURROOTPASSWORD
+        "${mysqladmin}"  -uroot -p$CURROOTPASSWORD password $CURROOTPASSWORD
         if [ $? != 0 ] ; then
             printf '\033[31mPlease input the current root password:\033[0m'
             read answer
-            mysqladmin -uroot -p$answer password $answer
+            "${mysqladmin}"  -uroot -p$answer password $answer
             if [ $? = 0 ] ; then
                 CURROOTPASSWORD=$answer
             else
                 echoR "root password is incorrect. 2 attempts remaining."
                 printf '\033[31mPlease input the current root password:\033[0m'
                 read answer
-                mysqladmin -uroot -p$answer password $answer
+                "${mysqladmin}"  -uroot -p$answer password $answer
                 if [ $? = 0 ] ; then
                     CURROOTPASSWORD=$answer
                 else
                     echoR "root password is incorrect. 1 attempt remaining."
                     printf '\033[31mPlease input the current root password:\033[0m'
                     read answer
-                    mysqladmin -uroot -p$answer password $answer
+                    "${mysqladmin}"  -uroot -p$answer password $answer
                     if [ $? = 0 ] ; then
                         CURROOTPASSWORD=$answer
                     else
@@ -1131,9 +1132,19 @@ function install_postfix
     fi
 }
 
+function compatible_mariadb_cmd
+{
+    MA_TMPVER=$(echo $MARIADBVER | awk -F '.' '{print $1}')
+    if [ ${MA_TMPVER} -ge 11 ]; then
+        mysqladmin='mariadb-admin'
+        mysql='mariadb'
+    fi    
+}
+
 function install_mariadb
 {
     echoG "Start Install MariaDB"
+    compatible_mariadb_cmd
     if [ "$OSNAME" = 'centos' ] ; then
         centos_install_mariadb
     else
@@ -1144,15 +1155,15 @@ function install_mariadb
         echoR "Please fix this error and try again. Aborting installation!"
         exit 1
     fi
-
+    
     echoB "${FPACE} - Set MariaDB root"
-    mysql -uroot -e "flush privileges;"
-    mysqladmin -uroot password $ROOTPASSWORD
+    "${mysql}" -uroot -e "flush privileges;"
+    "${mysqladmin}" -uroot password $ROOTPASSWORD
     if [ $? = 0 ] ; then
         CURROOTPASSWORD=$ROOTPASSWORD
     else
         #test it is the current password
-        mysqladmin -uroot -p$ROOTPASSWORD password $ROOTPASSWORD
+        "${mysqladmin}" -uroot -p$ROOTPASSWORD password $ROOTPASSWORD
         if [ $? = 0 ] ; then
             #echoG "MySQL root password is $ROOTPASSWORD"
             CURROOTPASSWORD=$ROOTPASSWORD
@@ -1181,7 +1192,7 @@ function install_mariadb
                     echoG "OK, MySQL root password not changed."
                     ROOTPASSWORD=$CURROOTPASSWORD
                 else
-                    mysqladmin -uroot -p$CURROOTPASSWORD password $ROOTPASSWORD
+                    "${mysqladmin}" -uroot -p$CURROOTPASSWORD password $ROOTPASSWORD
                     if [ $? = 0 ] ; then
                         echoG "OK, MySQL root password changed to $ROOTPASSWORD."
                     else
@@ -1331,17 +1342,18 @@ function install_percona
 function setup_mariadb_user
 {
     echoG "Start setup MariaDB"
+    compatible_mariadb_cmd
     local ERROR=
     #delete user if exists
-    mysql -uroot -p$ROOTPASSWORD  -e "DELETE FROM mysql.user WHERE User = '$USERNAME@localhost';"
+    "${mysql}" -uroot -p$ROOTPASSWORD  -e "DELETE FROM mysql.user WHERE User = '$USERNAME@localhost';"
 
-    echo `mysql -uroot -p$ROOTPASSWORD -e "SELECT user FROM mysql.user"` | grep "$USERNAME" >/dev/null
+    echo `"${mysql}" -uroot -p$ROOTPASSWORD -e "SELECT user FROM mysql.user"` | grep "$USERNAME" >/dev/null
     if [ $? = 0 ] ; then
         echoG "user $USERNAME exists in mysql.user"
     else
-        mysql -uroot -p$ROOTPASSWORD  -e "CREATE USER $USERNAME@localhost IDENTIFIED BY '$USERPASSWORD';"
+        "${mysql}" -uroot -p$ROOTPASSWORD  -e "CREATE USER $USERNAME@localhost IDENTIFIED BY '$USERPASSWORD';"
         if [ $? = 0 ] ; then
-            mysql -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON *.* TO '$USERNAME'@localhost IDENTIFIED BY '$USERPASSWORD';"
+            "${mysql}" -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON *.* TO '$USERNAME'@localhost IDENTIFIED BY '$USERPASSWORD';"
         else
             echoR "Failed to create MySQL user $USERNAME. This user may already exist. If it does not, another problem occured."
             echoR "Please check this and update the wp-config.php file."
@@ -1349,9 +1361,9 @@ function setup_mariadb_user
         fi
     fi
 
-    mysql -uroot -p$ROOTPASSWORD  -e "CREATE DATABASE IF NOT EXISTS $DATABASENAME;"
+    "${mysql}" -uroot -p$ROOTPASSWORD  -e "CREATE DATABASE IF NOT EXISTS $DATABASENAME;"
     if [ $? = 0 ] ; then
-        mysql -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON $DATABASENAME.* TO '$USERNAME'@localhost IDENTIFIED BY '$USERPASSWORD';"
+        "${mysql}" -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON $DATABASENAME.* TO '$USERNAME'@localhost IDENTIFIED BY '$USERPASSWORD';"
     else
         echoR "Failed to create database $DATABASENAME. It may already exist. If it does not, another problem occured."
         echoR "Please check this and update the wp-config.php file."
@@ -1361,7 +1373,7 @@ function setup_mariadb_user
             ERROR="$ERROR and create database error"
         fi
     fi
-    mysql -uroot -p$ROOTPASSWORD  -e "flush privileges;"
+    "${mysql}" -uroot -p$ROOTPASSWORD  -e "flush privileges;"
 
     if [ "x$ERROR" = "x" ] ; then
         echoG "Finished MySQL setup without error."
@@ -1377,15 +1389,15 @@ function setup_mysql_user
     echoG "Start setup MySQL"
     local ERROR=
     #delete user if exists
-    mysql -uroot -p$ROOTPASSWORD  -e "DELETE FROM mysql.user WHERE User = '$USERNAME@localhost';" 2>/dev/null
+    "${mysql}" -uroot -p$ROOTPASSWORD  -e "DELETE FROM mysql.user WHERE User = '$USERNAME@localhost';" 2>/dev/null
 
-    echo `mysql -uroot -p$ROOTPASSWORD -e "SELECT user FROM mysql.user" 2>/dev/null` | grep "$USERNAME" >/dev/null
+    echo `"${mysql}" -uroot -p$ROOTPASSWORD -e "SELECT user FROM mysql.user" 2>/dev/null` | grep "$USERNAME" >/dev/null
     if [ $? = 0 ] ; then
         echoG "user $USERNAME exists in mysql.user"
     else
-        mysql -uroot -p$ROOTPASSWORD  -e "CREATE USER $USERNAME@localhost IDENTIFIED BY '$USERPASSWORD';" 2>/dev/null
+        "${mysql}" -uroot -p$ROOTPASSWORD  -e "CREATE USER $USERNAME@localhost IDENTIFIED BY '$USERPASSWORD';" 2>/dev/null
         if [ $? = 0 ] ; then
-            mysql -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON *.* TO '$USERNAME'@localhost;" 2>/dev/null
+            "${mysql}" -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON *.* TO '$USERNAME'@localhost;" 2>/dev/null
         else
             echoR "Failed to create MySQL user $USERNAME. This user may already exist. If it does not, another problem occured."
             echoR "Please check this and update the wp-config.php file."
@@ -1393,9 +1405,9 @@ function setup_mysql_user
         fi
     fi
 
-    mysql -uroot -p$ROOTPASSWORD  -e "CREATE DATABASE IF NOT EXISTS $DATABASENAME;" 2>/dev/null
+    "${mysql}" -uroot -p$ROOTPASSWORD  -e "CREATE DATABASE IF NOT EXISTS $DATABASENAME;" 2>/dev/null
     if [ $? = 0 ] ; then
-        mysql -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON $DATABASENAME.* TO '$USERNAME'@localhost;" 2>/dev/null
+        "${mysql}" -uroot -p$ROOTPASSWORD  -e "GRANT ALL PRIVILEGES ON $DATABASENAME.* TO '$USERNAME'@localhost;" 2>/dev/null
     else
         echoR "Failed to create database $DATABASENAME. It may already exist. If it does not, another problem occured."
         echoR "Please check this and update the wp-config.php file."
@@ -1405,7 +1417,7 @@ function setup_mysql_user
             ERROR="$ERROR and create database error"
         fi
     fi
-    mysql -uroot -p$ROOTPASSWORD  -e "flush privileges;" 2>/dev/null
+    "${mysql}" -uroot -p$ROOTPASSWORD  -e "flush privileges;" 2>/dev/null
 
     if [ "x$ERROR" = "x" ] ; then
         echoG "Finished MySQL setup without error."
@@ -1887,7 +1899,7 @@ function check_cur_status
         LSWSINSTALLED=0
     fi
 
-    which mysqladmin  >/dev/null 2>&1
+    which ${mysqladmin}  >/dev/null 2>&1
     if [ $? = 0 ] ; then
         MYSQLINSTALLED=1
     else
