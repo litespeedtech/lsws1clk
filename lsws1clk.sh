@@ -1743,8 +1743,8 @@ function config_server
         echoR "${WEBCF} is missing. It appears that something went wrong during LiteSpeed installation."
         ALLERRORS=1
     fi
-    if [ -z /bin/php ]; then
-        ln -s ${SERVER_ROOT}/lsphp"${LSPHPVER}"/bin/lsphp /bin/php
+    if [ ! -f /bin/php ]; then
+        ln -s ${SERVER_ROOT}/lsphp"${LSPHPVER}"/bin/php /bin/php
     fi    
     if [ ${PROXY} = '1' ]; then
         sed -i "/<extProcessorList>/a \\
