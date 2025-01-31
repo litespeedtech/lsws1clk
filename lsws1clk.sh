@@ -263,7 +263,7 @@ function usage
 function display_license
 {
     echoY '**********************************************************************************************'
-    echoY '*                    LiteSpeed One click installation, Version Beta                          *'
+    echoY '*                    LiteSpeed One click installation, Version 1.0                           *'
     echoY '*                    Copyright (C) LiteSpeed Technologies, Inc.                              *'
     echoY '**********************************************************************************************'
 }
@@ -2487,8 +2487,8 @@ while [ ! -z "${1}" ] ; do
                 ACTION=UNINSTALL
                 ;;
         -[lL] | --license)
+                check_value_follow "${2}"
                 shift
-                check_input "${1}"
                 LICENSE="${1}"
                 ;;                 
         --proxy-r )
