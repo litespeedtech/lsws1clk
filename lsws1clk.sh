@@ -212,10 +212,10 @@ function restart_lsws
 function usage
 {
     echo -e "\033[1mOPTIONS\033[0m"
-    echoNW "  -L,    license"                 "${EPACE} To use specified LSWS serial number."    
+    echoNW "  -L,    license"                 "${EPACE}                   To use specified LSWS serial number."    
     echoW " --adminuser [USERNAME]"           "${EPACE}    To set the WebAdmin username for LiteSpeed instead of admin."
     echoNW "  -A,    --adminpassword [PASSWORD]" "${EPACE}To set the WebAdmin password for LiteSpeed instead of using a random one."
-    echoW " --adminport [PORTNUMBER]"           "${EPACE}    To set the WebAdmin console port number instead of 7080."
+    echoW " --adminport [PORTNUMBER]"           "${EPACE}  To set the WebAdmin console port number instead of 7080."
     echoNW "  -E,    --email [EMAIL]          " "${EPACE} To set the administrator email."
     echoW " --lsphp [VERSION]                 " "To set the LSPHP version, such as 83. We currently support versions '${LSPHPVERLIST[@]}'."
     echoW " --mariadbver [VERSION]            " "To set MariaDB version, such as 11.4. We currently support versions '${MARIADBVERLIST[@]}'."
@@ -1573,17 +1573,6 @@ function install_litespeed
 {
     echoG "Start setup LiteSpeed"
     local STATUS=Install
-    #if [ "$LSWSINSTALLED" = "1" ] ; then
-    #    LSWS_VERSION=$(cat "$SERVER_ROOT"/VERSION)
-    #    if [ "$LSWS_VERSION" = "$LATEST_VERSION" ] ; then
-    #        STATUS=Reinstall
-    #        echoY "LiteSpeed is already installed with the latest version, will attempt to reinstall it."
-    #    else
-    #        STATUS=Update
-    #        echoY "LiteSpeed is already installed and newer version is available, will attempt to update it."
-    #    fi
-    #fi
-
     if [ "$OSNAME" = "centos" ] ; then
         install_lsws_centos $STATUS
     else
