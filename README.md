@@ -12,12 +12,12 @@ Our One-Click script comes with several options. Here are two commmon usages.
 
 Install LiteSpeed, LSPHP, MariaDB, WordPress, and LiteSpeed Cache plugin:
 ```
-bash <( curl -k https://raw.githubusercontent.com/litespeedtech/lsws1clk/master/lsws1clk.sh ) -w
+bash <( curl -sk https://raw.githubusercontent.com/litespeedtech/lsws1clk/master/lsws1clk.sh ) -w
 ```
 
 Install LiteSpeed and LSPHP only:
 ```
-bash <( curl -k https://raw.githubusercontent.com/litespeedtech/lsws1clk/master/lsws1clk.sh )
+bash <( curl -sk https://raw.githubusercontent.com/litespeedtech/lsws1clk/master/lsws1clk.sh )
 ```
 
 See below for additional options and usage examples.

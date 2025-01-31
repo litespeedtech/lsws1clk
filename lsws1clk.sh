@@ -597,15 +597,6 @@ function install_lsws_debian
         ALLERRORS=1
     fi
     
-    #if [ -e $SERVER_ROOT/bin/litespeed ]; then 
-    #    echoB "${FPACE} - Setup lsphp symlink"
-    #    ln -sf $SERVER_ROOT/lsphp$LSPHPVER/bin/lsphp $SERVER_ROOT/fcgi-bin/lsphpnew
-    #    sed -i -e "s/fcgi-bin\/lsphp/fcgi-bin\/lsphpnew/g" "${WEBCF}"    
-    #    sed -i -e "s/lsphp${WEBADMIN_LSPHPVER}\/bin\/lsphp/lsphp$LSPHPVER\/bin\/lsphp/g" "${WEBCF}"
-    #    if [ ! -f /usr/bin/php ]; then
-    #        ln -s ${SERVER_ROOT}/lsphp${LSPHPVER}/bin/php /usr/bin/php
-    #    fi        
-    #fi
     if [ ${INSTALLWORDPRESS} = 1 ]; then
         silent ${APT} -y install $action lsphp$LSPHPVER-imagick lsphp$LSPHPVER-opcache lsphp$LSPHPVER-redis lsphp$LSPHPVER-memcached lsphp$LSPHPVER-intl
     fi    
