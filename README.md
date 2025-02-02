@@ -6,6 +6,8 @@
 
 lsws1clk is a one-click installation script for LiteSpeed. Using this script, you can quickly and easily install LiteSpeed with it’s default settings. We also provide a **-W** parameter that will install WordPress at the same time but it must still be configured through the wp-config.php page. By default, a MariaDB database will be set up using this script, you can also specify other DB if needed. If you already have a WordPress installation running on another server, it can be imported into LiteSpeed with no hassle using the **--wordpresspath** parameter. To completely install WordPress with your LiteSpeed installation, skipping the need for the wp-config.php page, use the **--wordpressplus** flag. This can be used with **--wpuser**, **--wppassword**, **--wplang**, and **--sitetitle** to configure each of the settings normally set by wp-config.php.
 
+The script includes a 15-day trial license by default. After the trial period, you can apply your own license or enter your serial number using the --license xxxxxxxx command during installation. Licenses start at $0. [Read more](https://www.litespeedtech.com/products/litespeed-web-server/lsws-pricing).
+
 ## Installation
 
 Our One-Click script comes with several options. Here are two commmon usages.
@@ -108,3 +110,4 @@ Note: The `-f` option is to force https redirection
 If you still have a question after reading these instructions, you have a few options:
 * Join [the GoLiteSpeed Slack community](https://litespeedtech.com/slack) for real-time discussion
 * Report any issue on the [Github lsws1clk](https://github.com/litespeedtech/lsws1clk/issues) project
+* Join the discussion on any LiteSpeed topic on the [LSWS Forum](https://litespeedtech.com/support/forum/).
