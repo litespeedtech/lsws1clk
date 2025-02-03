@@ -2262,8 +2262,8 @@ function test_lsws_admin
 function test_lsws
 {
     if [ ${PROXY} = 0 ]; then
-        test_page http://localhost:$HTTPPORT/  Congratulation "test Example HTTP vhost page"
-        test_page https://localhost:$HTTPSPORT/  Congratulation "test Example HTTPS vhost page"
+        test_page http://localhost:$HTTPPORT/  LiteSpeed "test Example HTTP vhost page"
+        test_page https://localhost:$HTTPSPORT/  LiteSpeed "test Example HTTPS vhost page"
     else
         echoG 'Proxy is on, skip the test!'
     fi    
@@ -2296,7 +2296,7 @@ function main_lsws_test
 {
     echoCYAN "Start auto testing >> >> >> >>"
     test_lsws_admin
-    if [ "${PURE_DB}" = '1' ] || [ "${PURE_MYSQL}" = '1' ]; then 
+    if [ "${PURE_DB}" = '1' ] || [ "${PURE_MYSQL}" = '1' ] || [ "${PURE_PERCONA}" = '1' ] ; then 
         test_lsws
     elif [ "$INSTALLWORDPRESS" = "1" ] ; then
         if [ "$INSTALLWORDPRESSPLUS" = "1" ] ; then
