@@ -507,15 +507,7 @@ function install_lsws_centos
     fi
     if [ $? != 0 ] ; then
         echoR "An error occured during LiteSpeed installation."
-        ALLERRORS=1
-    #else
-        #echoB "${FPACE} - Setup lsphp symlink"
-        #ln -sf $SERVER_ROOT/lsphp$LSPHPVER/bin/lsphp $SERVER_ROOT/fcgi-bin/lsphpnew
-        #sed -i -e "s/fcgi-bin\/lsphp/fcgi-bin\/lsphpnew/g" "${WEBCF}"
-        #sed -i -e "s/lsphp${WEBADMIN_LSPHPVER}\/bin\/lsphp/lsphp$LSPHPVER\/bin\/lsphp/g" "${WEBCF}"
-        #if [ ! -f /usr/bin/php ]; then
-        #    ln -s ${SERVER_ROOT}/lsphp${LSPHPVER}/bin/php /usr/bin/php
-        #fi          
+        ALLERRORS=1        
     fi
     if [ ${INSTALLWORDPRESS} = 1 ]; then
         silent ${YUM} -y $action lsphp$LSPHPVER-imagick lsphp$LSPHPVER-opcache lsphp$LSPHPVER-redis lsphp$LSPHPVER-memcached lsphp$LSPHPVER-intl
@@ -659,11 +651,11 @@ function config_php
         PHPINICONF="${SERVER_ROOT}/lsphp${LSPHPVER}/etc/php/${PHPMVER}/litespeed/php.ini"
     fi
     if [ -e "${PHPINICONF}" ]; then 
-        sed -i 's|memory_limit = 128M|memory_limit = 256M|g' ${PHPINICONF}
-        sed -i 's|max_execution_time = 30|max_execution_time = 120|g' ${PHPINICONF}
-        sed -i 's|max_input_time = 60|max_input_time = 240|g' ${PHPINICONF}
-        sed -i 's|post_max_size = 8M|post_max_size = 256M|g' ${PHPINICONF}
-        sed -i 's|upload_max_filesize = 2M|upload_max_filesize = 256M|g' ${PHPINICONF}
+        sed -i 's|memory_limit = 128M|memory_limit = 1024M|g' ${PHPINICONF}
+        sed -i 's|max_execution_time = 30|max_execution_time = 360|g' ${PHPINICONF}
+        sed -i 's|max_input_time = 60|max_input_time = 360|g' ${PHPINICONF}
+        sed -i 's|post_max_size = 8M|post_max_size = 512M|g' ${PHPINICONF}
+        sed -i 's|upload_max_filesize = 2M|upload_max_filesize = 512M|g' ${PHPINICONF}
     else
         echoY "${PHPINICONF} does not exist, skip!"
     fi    
@@ -919,9 +911,9 @@ function debian_install_mariadb
     fi
     echoB "${FPACE} - Add MariaDB repo"
 	if [ "${OSNAMEVER}" = 'UBUNTU24' ]; then
-        #https://forum.hestiacp.com/t/mariadb-repos-failing/13097
-        echoB "${FPACE} - Skip adding MariaDB repo"
-    else 
+#        #https://forum.hestiacp.com/t/mariadb-repos-failing/13097
+#        echoB "${FPACE} - Skip adding MariaDB repo"
+#    else 
         echoB "${FPACE} - Add MariaDB repo"   
         curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-$MARIADBVER" >/dev/null 2>&1
     fi
