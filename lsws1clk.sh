@@ -1,6 +1,6 @@
 #!/bin/bash
 CMDFD='/opt'
-LS_VER='6.3.2'
+LS_VER='6.3.1'
 TEMPRANDSTR=
 OSNAMEVER=UNKNOWN
 OSNAME=
