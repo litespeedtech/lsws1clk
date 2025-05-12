@@ -59,6 +59,7 @@ See below for additional options and usage examples.
 |      |   `--with-percona`  |             To install LiteSpeed/App with Percona.|
 |      |   `--owasp-enable`  |             To enable mod_security with OWASP rules. If LSWS is installed, then enable the owasp directly|
 |      |   `--owasp-disable`  |            To disable mod_security with OWASP rules.|    
+|      |   `--fail2ban-enable`  |         To enable fail2ban for webadmin and wordpress login pages.|
 |      |   `--proxy-r`  |                  To set a proxy with rewrite type.|
 |      |   `--proxy-c`  |                  To set a proxy with config type.|
 | `-U` |   `--uninstall`  |                To uninstall LiteSpeed and remove installation directory.|
