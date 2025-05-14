@@ -1,6 +1,6 @@
 #!/bin/bash
 CMDFD='/opt'
-LS_VER='6.3.1'
+LS_VER='6.3.2'
 TEMPRANDSTR=
 OSNAMEVER=UNKNOWN
 OSNAME=
@@ -1978,6 +1978,7 @@ function uninstall
     if [ "$LSWSINSTALLED" = "1" ] ; then
         echoB "${FPACE} - Stop LiteSpeed"
         silent $SERVER_ROOT/bin/lswsctrl stop
+        pkill -9 litespeed
         echoB "${FPACE} - Stop LSPHP"
         silent killall -9 lsphp
         if [ "$OSNAME" = "centos" ] ; then

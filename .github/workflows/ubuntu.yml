@@ -38,6 +38,6 @@ jobs:
           fi
       - name: lsws1clk pluss installation    
         run: |
-          sudo bash lsws1clk.sh --lsphp 83 --wordpressplus ${{ env.WP_DOMAIN }} --wordpresspath /var/www/html --quiet 
+          sudo bash lsws1clk.sh --lsphp 84 --wordpressplus ${{ env.WP_DOMAIN }} --wordpresspath /var/www/html --quiet 
       - name: Verify    
         run: curl -skL http://${{ env.WP_DOMAIN }}/ | grep -i "WordPress" >/dev/null 2>&1 
