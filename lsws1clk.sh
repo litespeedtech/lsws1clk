@@ -18,6 +18,8 @@ MYSQLINSTALLED=
 TESTGETERROR=no
 DATABASENAME=lswsdbname
 USERNAME=lswsdbuser
+USER=
+GROUP=
 DBPREFIX=wp_
 VERBOSE=0
 PURE_DB=0
@@ -228,6 +230,8 @@ function usage
     echoW " --dbuser [DBUSERNAME]             " "To set the WordPress username in the database."
     echoW " --dbpassword [PASSWORD]           " "To set the WordPress table password in MySQL instead of using a random one."
     echoW " --prefix [PREFIXNAME]             " "To set the WordPress table prefix."
+    echoW " --user [PORT]                     " "To set the user that LiteSpeed will run as. Default is nobody."
+    echoW " --group [PORT]                    " "To set the group that LiteSpeed will run as."    
     echoW " --listenport [PORT]               " "To set the HTTP server listener port, default is 80."
     echoW " --ssllistenport [PORT]            " "To set the HTTPS server listener port, default is 443."
     echoW " --wpuser [WORDPRESSUSER]          " "To set the WordPress admin user for WordPress dashboard login. Default value is wpuser."
@@ -270,12 +274,33 @@ function display_license
     echoY '**********************************************************************************************'
 }
 
+function check_user_exist
+{
+    if [[ -n "${USER}" ]]; then
+        if getent passwd "$USER" >/dev/null; then
+            echoG "USER:$USER exist"
+        else
+            echoR "USER:$USER does not exist, use system default value!"
+            USER=''
+        fi
+    fi
+    if [[ -n "$GROUP" ]]; then
+        if getent group "$GROUP" > /dev/null; then
+            echoG "GROUP: $GROUP exists"
+        else
+            echoR "GROUP: $GROUP does not exist, using system default value!"
+            GROUP=''
+        fi
+    fi    
+}
+
 function check_os
 {
+    check_user_exist
     if [ -f /etc/centos-release ] ; then
         OSNAME=centos
-        USER='nobody'
-        GROUP='nobody'
+        : "${USER:=nobody}"
+        : "${GROUP:=nobody}"
         case $(cat /etc/centos-release | tr -dc '0-9.'|cut -d \. -f1) in 
         7)
             OSNAMEVER=CENTOS7
@@ -292,8 +317,8 @@ function check_os
         esac
     elif [ -f /etc/redhat-release ] ; then
         OSNAME=centos
-        USER='nobody'
-        GROUP='nobody'
+        : "${USER:=nobody}"
+        : "${GROUP:=nobody}"
         case $(cat /etc/redhat-release | tr -dc '0-9.'|cut -d \. -f1) in 
         7)
             OSNAMEVER=CENTOS7
@@ -310,8 +335,8 @@ function check_os
         esac             
     elif [ -f /etc/lsb-release ] ; then
         OSNAME=ubuntu
-        USER='nobody'
-        GROUP='nogroup'
+        : "${USER:=nobody}"
+        : "${GROUP:=nogroup}"
         case $(cat /etc/os-release | grep UBUNTU_CODENAME | cut -d = -f 2) in
         bionic)
             OSNAMEVER=UBUNTU18
@@ -336,8 +361,8 @@ function check_os
         esac
     elif [ -f /etc/debian_version ] ; then
         OSNAME=debian
-        USER='nobody'
-        GROUP='nogroup'        
+        : "${USER:=nobody}"
+        : "${GROUP:=nogroup}"       
         case $(cat /etc/os-release | grep VERSION_CODENAME | cut -d = -f 2) in
         stretch) 
             OSNAMEVER=DEBIAN9
@@ -2115,6 +2140,8 @@ function befor_install_display
     echoY "WebAdmin username:        " "$ADMINUSER"
     echoY "WebAdmin password:        " "$ADMINPASSWORD"
     echoY "WebAdmin email:           " "$EMAIL"
+    echoY "Web server user:          " "$USER"
+    echoY "Web server group:         " "$GROUP"
     echoY "LSPHP version:            " "$LSPHPVER"
     if [ ${WITH_MYSQL} = 0 ] && [ "${PURE_MYSQL}" = 0 ] && [ "${WITH_PERCONA}" = 0 ] && [ "${PURE_PERCONA}" = 0 ] && [ "${PURE_DB}" = 0 ]; then 
         if [ ${INSTALLWORDPRESS} = 1 ]; then
@@ -2535,6 +2562,16 @@ while [ ! -z "${1}" ] ; do
                 if [ ! -z "$FOLLOWPARAM" ] ; then shift; fi
                 USERPASSWORD=$FOLLOWPARAM
                 ;;
+        --user )           
+                check_value_follow "$2" "user name"
+                shift
+                USER=$FOLLOWPARAM
+                ;;
+        --group )           
+                check_value_follow "$2" "group name"
+                shift
+                GROUP=$FOLLOWPARAM
+                ;;                
         --listenport )      
                 check_value_follow "$2" "HTTP listen port"
                 shift
