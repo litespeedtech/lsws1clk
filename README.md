@@ -28,7 +28,7 @@ See below for additional options and usage examples.
 ### Essential Options
 |  Opt |    Options    | Description|
 | :---: | ---------  | ---  |
-|  `L` |`--license`|                       To use specified LSWS serial number.|
+|  `-L` |`--license`|                       To use specified LSWS serial number.|
 |      |`--adminuser [USERNAME]`|          To set the WebAdmin username for LiteSpeed instead of admin.|
 | `-A` |`--adminpassword [PASSWORD]`|      To set the WebAdmin password for LiteSpeed instead of using a random one.|
 |      |`--adminport [PORTNUMBER]`|          To set the WebAdmin console port number instead of 7080.|
