@@ -6,6 +6,7 @@ OSNAMEVER=UNKNOWN
 OSNAME=
 OSVER=
 OSTYPE=$(uname -m)
+LSWS_ARCH=
 MARIADBCPUARCH=
 SERVER_ROOT=/usr/local/lsws
 WEBCF="$SERVER_ROOT/conf/httpd_config.xml"
@@ -396,8 +397,26 @@ function install_lsws
         rm -rf ${SERVER_ROOT}
     fi
     echoG 'Download LiteSpeed Web Server'
-    wget -q --no-check-certificate https://www.litespeedtech.com/packages/6.0/lsws-${LS_VER}-ent-x86_64-linux.tar.gz -P ${CMDFD}/
-    silent tar -zxvf lsws-*-ent-x86_64-linux.tar.gz
+
+    # Detect and normalize CPU architecture for LiteSpeed package download
+    # Reuse OSTYPE variable already defined at top of script
+    case "${OSTYPE}" in
+        aarch64|arm64)
+            LSWS_ARCH="aarch64"
+            ;;
+        x86_64|amd64)
+            LSWS_ARCH="x86_64"
+            ;;
+        *)
+            echoR "Error: Unsupported CPU architecture: ${OSTYPE}" >&2
+            echoR "LiteSpeed Enterprise supports x86_64 and aarch64 only." >&2
+            exit 1
+            ;;
+    esac
+
+    echoG "Downloading LiteSpeed for ${LSWS_ARCH} architecture..."
+    wget -q --no-check-certificate https://www.litespeedtech.com/packages/6.0/lsws-${LS_VER}-ent-${LSWS_ARCH}-linux.tar.gz -P ${CMDFD}/
+    silent tar -zxvf lsws-*-ent-${LSWS_ARCH}-linux.tar.gz
     rm -f lsws-*.tar.gz
     cd lsws-*
     if [ "${LICENSE}" == 'TRIAL' ]; then 
