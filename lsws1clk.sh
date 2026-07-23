@@ -1,6 +1,6 @@
 #!/bin/bash
 CMDFD='/opt'
-LS_VER='6.3.5'
+LS_VER='6.3.6'
 TEMPRANDSTR=
 OSNAMEVER=UNKNOWN
 OSNAME=
@@ -56,9 +56,9 @@ LSPHPVER=84
 MARIADBVER=11.8
 #MYSQLVER=8.0
 LICENSE='TRIAL'
-PERCONAVER=80
+PERCONAVER=84-lts
 WEBADMIN_LSPHPVER=74
-OWASP_V='4.26.0'
+OWASP_V='4.28.0'
 SET_OWASP=
 SET_fail2ban=
 ALLERRORS=0
@@ -870,10 +870,10 @@ function centos_install_percona
     echoB "${FPACE} - Add Percona repo"
     silent ${YUM} install -y https://repo.percona.com/yum/percona-release-latest.noarch.rpm
     echoB "${FPACE} - Enable Percona repo"
-    percona-release setup ps${PERCONAVER} -y >/dev/null 2>&1
+    percona-release enable-only ps-${PERCONAVER} release >/dev/null 2>&1
     silent ${YUM} install -y percona-server-server
-    service mysqld start 2>/dev/null
-}    
+    service mysqld restart 2>/dev/null
+}     
 
 function centos_install_unzip
 {
@@ -938,7 +938,8 @@ function debian_install_percona
     echoB "${FPACE} - Update packages"
     ${APT} update
     echoB "${FPACE} - Install Percona"
-    percona-release setup ps${PERCONAVER} > /dev/null 2>&1
+    percona-release setup ps-${PERCONAVER} --scheme https > /dev/null 2>&1
+    percona-release enable ps-${PERCONAVER} release --scheme https > /dev/null 2>&1
     DEBIAN_FRONTEND=noninteractive apt-get -y install percona-server-server > /dev/null 2>&1
     if [ $? != 0 ] ; then
         echoR "An error occured during installation of Percona. Please fix this error and try again."
@@ -946,8 +947,8 @@ function debian_install_percona
         exit 1
     fi
     echoB "${FPACE} - Start Percona"
-    service mysql start
-}    
+    service mysql restart
+} 
 
 function debian_install_unzip
 {
@@ -2258,7 +2259,8 @@ function main_install_wordpress
                     if [ "${WITH_MYSQL}" = '1' ]; then
                         setup_mysql_user
                     elif [ "${WITH_PERCONA}" = '1' ]; then
-                        setup_percona_user                        
+                        setup_percona_user        
+                        service mysql restart 2>/dev/null          
                     else 
                         setup_mariadb_user
                     fi    

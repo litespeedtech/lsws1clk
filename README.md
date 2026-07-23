@@ -2,15 +2,23 @@
 [![Build Status](https://github.com/litespeedtech/lsws1clk/workflows/lsws1clk/badge.svg)](https://github.com/litespeedtech/lsws1clk/actions/)
 [<img src="https://img.shields.io/badge/slack-LiteSpeed-blue.svg?logo=slack">](litespeedtech.com/slack) 
 [<img src="https://img.shields.io/twitter/follow/litespeedtech.svg?label=Follow&style=social">](https://twitter.com/litespeedtech)
+
 ## Description
 
-lsws1clk is a one-click installation script for LiteSpeed. Using this script, you can quickly and easily install LiteSpeed with it’s default settings. We also provide a **-W** parameter that will install WordPress at the same time but it must still be configured through the wp-config.php page. By default, a MariaDB database will be set up using this script, you can also specify other DB if needed. If you already have a WordPress installation running on another server, it can be imported into LiteSpeed with no hassle using the **--wordpresspath** parameter. To completely install WordPress with your LiteSpeed installation, skipping the need for the wp-config.php page, use the **--wordpressplus** flag. This can be used with **--wpuser**, **--wppassword**, **--wplang**, and **--sitetitle** to configure each of the settings normally set by wp-config.php.
+`lsws1clk` is a one-click installation script for LiteSpeed Web Server.
+
+It can:
+- Install LiteSpeed with default settings
+- Install WordPress with LiteSpeed (`-W` / `--wordpress`)
+- Fully provision WordPress (`--wordpressplus`) with optional site settings
+- Use MariaDB by default, or MySQL/Percona via flags
+- Import an existing WordPress path (`--wordpresspath`)
 
 The script includes a 15-day trial license by default. After the trial period, you can apply your own license or enter your serial number using the --license xxxxxxxx command during installation. Licenses start at $0. [Read more](https://www.litespeedtech.com/products/litespeed-web-server/lsws-pricing).
 
 ## Installation
 
-Our One-Click script comes with several options. Here are two commmon usages.
+Common usage:
 
 Install LiteSpeed, LSPHP, MariaDB, WordPress, and LiteSpeed Cache plugin:
 ```
