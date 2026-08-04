@@ -78,8 +78,10 @@ See below for additional options and usage examples.
 | :---: | ---------  | ---  |
 |      |  `--listenport [PORT]`  |         To set the HTTP server listener port, default is 80.|
 |      |  `--ssllistenport [PORT]` |       To set the HTTPS server listener port, default is 443.|
+|      | `--sitedomain [SITEDOMAIN]` |     Set domain name mapping on listener level (default: `*`). |
 |      |   `--proxy-r`  |                  To set a proxy with rewrite type.|
 |      |   `--proxy-c`  |                  To set a proxy with config type.|
+|      | `--proxy-port [PORT]` |           Configure proxy port (default: `8080`). |
 
 ### Security Configuration
 |  Opt |    Options    | Description|
@@ -126,6 +128,11 @@ See below for additional options and usage examples.
 ```bash
 # To enable OWASP feature for LSWS. This single option can be used even if the web server is already installed. 
 ./lsws1clk.sh --owasp-enable
+```
+
+### Proxy custom port
+```bash
+./ols1clk.sh --proxy-r --proxy-port 7860
 ```
 
 ## FAQ

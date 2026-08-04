@@ -30,7 +30,8 @@ WITH_MYSQL=0
 WITH_PERCONA=0
 PROXY=0
 PROXY_TYPE=''
-PROXY_SERVER='http://127.0.0.1:8080'
+PROXY_PORT=8080
+PROXY_SERVER="http://127.0.0.1:${PROXY_PORT}"
 WORDPRESSPATH=$SERVER_ROOT/wordpress
 PWD_FILE=$SERVER_ROOT/password
 HTTPPORT=80
@@ -239,6 +240,7 @@ function usage
     echoW " --wppassword [PASSWORD]           " "To set the WordPress admin user password for WordPress dashboard login."
     echoW " --wplang [WP_LANGUAGE]            " "To set the WordPress language. Default value is \"en_US\" for English."
     echoW " --sitetitle [WP_TITLE]            " "To set the WordPress site title. Default value is mySite."
+    echoW " --sitedomain [SITEDOMAIN]         " "To set domain name mapping on listener level."     
     echoW " --pure-mariadb                    " "To install LiteSpeed and MariaDB"
     echoW " --pure-mysql                      " "To install LiteSpeed and MySQL"
     echoW " --pure-percona                    " "To install LiteSpeed and Percona"
@@ -249,6 +251,7 @@ function usage
     echoW " --fail2ban-enable                 " "To enable fail2ban for webadmin and wordpress login pages"    
     echoW " --proxy-r                         " "To set a proxy with rewrite type."
     echoW " --proxy-c                         " "To set a proxy with config type."
+    echoW " --proxy-port [PORT]               " "To set a proxy port, default value is 8080."
     echoNW "  -U,    --uninstall              " "${EPACE} To uninstall LiteSpeed and remove installation directory."
     echoNW "  -P,    --purgeall               " "${EPACE} To uninstall LiteSpeed, remove installation directory, and purge all data in MySQL."
     echoNW "  -Q,    --quiet                  " "${EPACE} To use quiet mode, won't prompt to input anything."
@@ -681,13 +684,13 @@ function download_wordpress
 function create_wordpress_cf
 {
     echoG 'Start Create Wordpress config'
-    cd "$WORDPRESSPATH"
+    cd "$WORDPRESSPATH"; sleep 3
     wp config create \
         --dbname=$DATABASENAME \
         --dbuser=$USERNAME \
         --dbpass=$USERPASSWORD \
         --dbprefix=$DBPREFIX \
-        --locale=ro_RO \
+        --locale=$WPLANGUAGE \
         --allow-root \
         --quiet
     echoG 'Done Create Wordpress config'
@@ -894,12 +897,19 @@ function debian_install_mariadb
     elif [ "$OSNAME" = "ubuntu" ]; then
         silent ${APT} -y -f install software-properties-common
     fi
-    echoB "${FPACE} - Add MariaDB repo"
-    echoB "${FPACE} - Add MariaDB repo"   
-    curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-$MARIADBVER" >/dev/null 2>&1
-    sed -i '/dlm.mariadb.com\/repo\/maxscale/ s/^/#/' /etc/apt/sources.list.d/mariadb.list
-    echoB "${FPACE} - Update packages"
-    ${APT} update
+    if [ ${OSNAMEVER} != "UBUNTU26" ]; then
+        echoB "${FPACE} - Add MariaDB repo"   
+        curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-$MARIADBVER" >/dev/null 2>&1
+        if [[ -f /etc/apt/sources.list.d/mariadb.list ]]; then
+            sed -i '/dlm\.mariadb\.com\/repo\/maxscale/ s/^/#/' \
+                /etc/apt/sources.list.d/mariadb.list
+        elif [[ -f /etc/apt/sources.list.d/mariadb.sources ]]; then
+            sed -i '/^X-Repolib-Name:[[:space:]]*MariaDB MaxScale$/,/^$/ s/^Enabled:[[:space:]]*yes$/Enabled: no/' \
+                /etc/apt/sources.list.d/mariadb.sources
+        fi
+        echoB "${FPACE} - Update packages"
+        ${APT} update
+    fi
     echoB "${FPACE} - Install MariaDB"
     silent ${APT} -y -f install mariadb-server
     if [ $? != 0 ] ; then
@@ -1720,19 +1730,25 @@ function config_server
       <name>HTTP</name> \\
       <address>*:"${HTTPPORT}"</address> \\
       <secure>0</secure> \\
-      <vhostMapList> \\
-      </vhostMapList> \\
+          <vhostMapList> \\
+          </vhostMapList> \\
     </listener> \\
     <listener> \\
       <name>HTTPS</name> \\
       <address>*:"${HTTPSPORT}"</address> \\
       <secure>1</secure> \\
-      <vhostMapList> \\
-      </vhostMapList> \\
+        <vhostMapList> \\
+        </vhostMapList> \\
       <keyFile>${SERVER_ROOT}/conf/${KEY}</keyFile> \\
       <certFile>${SERVER_ROOT}/conf/${CERT}</certFile> \\
     </listener>" "${WEBCF}"
         fi
+
+        if [ "${SITEDOMAIN}" != '*' ]; then
+            sed -Ei "s|<domain>\*</domain>|<domain>${SITEDOMAIN}</domain>|" "${WEBCF}"
+        fi
+        chown -R lsadm:lsadm $SERVER_ROOT/conf/httpd_config.xml
+
         echoB "${FPACE} - Setup PHP external App"
         sed -i "/<\/security>/a \\
   <extProcessorList> \\
@@ -1905,14 +1921,23 @@ function set_proxy_vh
     fi
 }
 
+function proxy_domain
+{
+    PROXYDOMAIN='WWW.EXAMPLE.COM'
+    if [ "$SITEDOMAIN}" != '*' ]; then
+        PROXYDOMAIN="${SITEDOMAIN}"
+    fi
+}
+
 function proxy_vh_rewrite
 {
+    proxy_domain
     sed -i 's/<enable>0</<enable>1</g' ${EXAMPLE_VHOSTCONF}
     sed -i '0,/<enable>1</s//<enable>0</' ${EXAMPLE_VHOSTCONF}
     sed -i '/rules/d' ${EXAMPLE_VHOSTCONF}
     sed -i "/<rewrite>/a \\
     <rules> \\
-    REWRITERULE ^(.*)$ HTTP://proxy-http/$1 [P,L,E=PROXY-HOST:WWW.EXAMPLE.COM] \\
+    REWRITERULE ^(.*)$ HTTP://proxy-http/$1 [P,L,E=PROXY-HOST:${PROXYDOMAIN}] \\
     </rules>" ${EXAMPLE_VHOSTCONF}
 }
 
@@ -2145,7 +2170,13 @@ function befor_install_display
     else
         echoY "Server HTTP port:         " "$HTTPPORT"
         echoY "Server HTTPS port:        " "$HTTPSPORT"
+        if [ "$SITEDOMAIN}" != '*' ]; then
+            echoY "Web site domain:          " "$SITEDOMAIN"
+        fi        
     fi
+    if [ ${PROXY} = 1 ]; then
+        echoY "Proxy to Port:            " "$PROXY_PORT"
+    fi     
     echoNW "Your password will be written to file:  ${PWD_FILE}"
     echo 
     if [ "$FORCEYES" != "1" ] ; then
@@ -2302,7 +2333,7 @@ function after_install_display
         echo "Also, you may want to activate the LiteSpeed Cache plugin to get better performance."
     fi
     if [ "${PROXY_TYPE}" = 'r' ]; then
-        echo "Please substitute the Default proxy address [${PROXY_SERVER}] and domain [WWW.EXAMPLE.COM] with your own value. More,"
+        echo "Please substitute the Default proxy address [${PROXY_SERVER}] and domain [${PROXYDOMAIN}] with your own value. More,"
         echoB "https://docs.litespeedtech.com/lsws/cp/cpanel/rewrite-proxy/"
     elif [ "${PROXY_TYPE}" = 'c' ]; then
         echo "Please substitute the Default proxy address [${PROXY_SERVER}] with your own value."
@@ -2326,6 +2357,15 @@ function test_page
     fi
 }
 
+function test_domain
+{
+    if [ "${SITEDOMAIN}" = '*' ]; then
+        TESTDOMAIN=localhost
+    else
+        TESTDOMAIN="${SITEDOMAIN}"
+    fi    
+}
+
 function test_lsws_admin
 {
     test_page https://localhost:${ADMINPORT}/ "LiteSpeed WebAdmin" "test webAdmin page"
@@ -2334,8 +2374,8 @@ function test_lsws_admin
 function test_lsws
 {
     if [ ${PROXY} = 0 ]; then
-        test_page http://localhost:$HTTPPORT/  LiteSpeed "test Example HTTP vhost page"
-        test_page https://localhost:$HTTPSPORT/  LiteSpeed "test Example HTTPS vhost page"
+        test_page http://${TESTDOMAIN}:$HTTPPORT/  LiteSpeed "test Example HTTP vhost page"
+        test_page https://${TESTDOMAIN}:$HTTPSPORT/  LiteSpeed "test Example HTTPS vhost page"
     else
         echoG 'Proxy is on, skip the test!'
     fi    
@@ -2344,12 +2384,12 @@ function test_lsws
 function test_wordpress
 {
     if [ ${PROXY} = 0 ]; then
-        test_page http://localhost:8088/  Congratulation "test Example vhost page"
+        test_page http://${TESTDOMAIN}:8088/  Congratulation "test Example vhost page"
     else
         echoG 'Proxy is on, skip the test!'
     fi      
-    test_page http://localhost:$HTTPPORT/ "WordPress" "test wordpress HTTP first page"
-    test_page https://localhost:$HTTPSPORT/ "WordPress" "test wordpress HTTPS first page"
+    test_page http://${TESTDOMAIN}:$HTTPPORT/ "WordPress" "test wordpress HTTP first page"
+    test_page https://${TESTDOMAIN}:$HTTPSPORT/ "WordPress" "test wordpress HTTPS first page"
 }
 
 function test_wordpress_plus
@@ -2367,6 +2407,7 @@ function test_wordpress_plus
 function main_lsws_test
 {
     echoCYAN "Start auto testing >> >> >> >>"
+    test_domain
     test_lsws_admin
     if [ "${PURE_DB}" = '1' ] || [ "${PURE_MYSQL}" = '1' ] || [ "${PURE_PERCONA}" = '1' ] ; then 
         test_lsws
@@ -2565,6 +2606,11 @@ while [ ! -z "${1}" ] ; do
                 shift
                 WPTITLE=$FOLLOWPARAM
                 ;;
+        --sitedomain )       
+                check_value_follow "$2" "Site Domain"
+                shift
+                SITEDOMAIN=$FOLLOWPARAM
+                ;;                   
         -[Uu] | --uninstall )       
                 ACTION=UNINSTALL
                 ;;
@@ -2580,7 +2626,13 @@ while [ ! -z "${1}" ] ; do
         --proxy-c )
                 PROXY=1
                 PROXY_TYPE='c'
-                ;;           
+                ;; 
+        --proxy-port)
+                check_value_follow "$2" "PROXY_PORT"
+                shift
+                PROXY_PORT=$FOLLOWPARAM
+                PROXY_SERVER="http://127.0.0.1:${PROXY_PORT}"
+                ;;                           
         --owasp-enable )
                 if [ -e ${WEBCF} ]; then
                     SET_OWASP='ON'
