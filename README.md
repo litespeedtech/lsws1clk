@@ -1,7 +1,7 @@
 # lsws1clk
-<!<Build Status>(https://github.com/litespeedtech/lsws1clk/workflows/lsws1clk/badge.svg)>(https://github.com/litespeedtech/lsws1clk/actions/)
-<<img src="https://img.shields.io/badge/slack-LiteSpeed-blue.svg?logo=slack">>(litespeedtech.com/slack) 
-<<img src="https://img.shields.io/twitter/follow/litespeedtech.svg?label=Follow&style=social">>(https://twitter.com/litespeedtech)
+[!<Build Status>(https://github.com/litespeedtech/lsws1clk/workflows/lsws1clk/badge.svg)](https://github.com/litespeedtech/lsws1clk/actions/)
+[<img src="https://img.shields.io/badge/slack-LiteSpeed-blue.svg?logo=slack">](litespeedtech.com/slack) 
+[<img src="https://img.shields.io/twitter/follow/litespeedtech.svg?label=Follow&style=social">](https://twitter.com/litespeedtech)
 
 ## Description
 

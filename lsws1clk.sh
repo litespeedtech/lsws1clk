@@ -59,7 +59,7 @@ MARIADBVER=11.8
 LICENSE='TRIAL'
 PERCONAVER=84-lts
 WEBADMIN_LSPHPVER=74
-OWASP_V='4.28.0'
+OWASP_V='4.29.0'
 SET_OWASP=
 SET_fail2ban=
 ALLERRORS=0
@@ -431,6 +431,7 @@ function install_lsws
     sed -i 's/read TMPS/TMPS=0/g' install.sh
     sed -i 's/read TMP_YN/TMP_YN=N/g' install.sh
     sed -i '/read [A-Z]/d' functions.sh
+    sed -i 's/^[[:space:]]*read -r /#&/' functions.sh
     sed -i 's/HTTP_PORT=$TMP_PORT/HTTP_PORT=8088/g' functions.sh
     sed -i 's/ADMIN_PORT=$TMP_PORT/ADMIN_PORT=7080/g' functions.sh
     sed -i 's/$TMP_PORT -eq $HTTP_PORT/$ADMIN_PORT -eq $HTTP_PORT/g' functions.sh
@@ -1694,7 +1695,10 @@ EOF
 
 function set_lsws_password
 {
-    ENCRYPT_PASS=`"$SERVER_ROOT/admin/fcgi-bin/admin_php5" -q "$SERVER_ROOT/admin/misc/htpasswd.php" $ADMINPASSWORD`
+    ENCRYPT_PASS=`LSWS_ADMIN_PASS="$ADMINPASSWORD" \
+        "$SERVER_ROOT/admin/fcgi-bin/admin_php5" -q \
+        "$SERVER_ROOT/admin/misc/htpasswd.php"`
+
     if [ $? = 0 ] ; then
         echo "${ADMINUSER}:$ENCRYPT_PASS" > "$SERVER_ROOT/admin/conf/htpasswd"
         if [ $? = 0 ] ; then
